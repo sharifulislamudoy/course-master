@@ -26,11 +26,12 @@ export const authOptions = {
           const user = await res.json();
 
           if (res.ok && user) {
-            // Return user object
+            // Return user object with role
             return {
               id: user.user._id,
               name: user.user.fullName,
               email: user.user.email,
+              role: user.user.role || 'student',
               ...user.user
             };
           }
@@ -54,6 +55,7 @@ export const authOptions = {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
+        token.role = user.role || 'student';
       }
       return token;
     },
@@ -62,6 +64,7 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.name = token.name;
         session.user.email = token.email;
+        session.user.role = token.role || 'student';
       }
       return session;
     },
