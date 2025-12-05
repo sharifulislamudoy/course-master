@@ -21,14 +21,14 @@ The platform features:
 - npm or yarn
 
 ### Step 1: Clone the Repository
-client side
+Client side
 ```bash
 git clone https://github.com/sharifulislamudoy/course-master
 cd course-master
 npm i
 npm run dev
 ```
-server side 
+Server side 
 ```bash
 git clone https://github.com/sharifulislamudoy/course-master-server
 cd course-master-server
@@ -37,7 +37,7 @@ node index.js
 ```
 
 ### Step 2: Import env file
-client side (.env.local) 
+Client side (.env.local) 
 ```bash
 PORT=5000
 MONGO_URI=your-mongodb-uri
@@ -45,7 +45,7 @@ JWT_SECRET=your-jwt-secret-key-here
 NODE_ENV=development
 ```
 
-server side
+Server side
 ```bash
 PORT=5000
 MONGO_URI=your-mongodb-uri
