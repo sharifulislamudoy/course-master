@@ -20,7 +20,9 @@ import {
   TrendingUp,
   X,
   Check,
-  Loader2
+  Loader2,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const CourseManagement = () => {
@@ -38,7 +40,16 @@ const CourseManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 6;
 
+  // Cloudinary upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [previewImage, setPreviewImage] = useState('');
+
   const router = useRouter();
+
+  // Cloudinary configuration
+  const cloudName = 'dohhfubsa';
+  const uploadPreset = 'react_unsigned';
 
   // Form state
   const [formData, setFormData] = useState({
@@ -51,7 +62,7 @@ const CourseManagement = () => {
     duration: '',
     level: 'Beginner',
     thumbnail: '',
-    batches: [{ name: 'Batch 1', startDate: '', endDate: '', maxStudents: 30, status: 'Upcoming' }],
+    batches: [{ name: 'Batch 1', startDate: '', endDate: '', maxStudents: 30}],
     isPublished: false
   });
 
@@ -116,7 +127,6 @@ const CourseManagement = () => {
           startDate: '', 
           endDate: '', 
           maxStudents: 30,
-          status: 'Upcoming' 
         }
       ]
     }));
@@ -127,6 +137,98 @@ const CourseManagement = () => {
     if (formData.batches.length > 1) {
       const updatedBatches = formData.batches.filter((_, i) => i !== index);
       setFormData(prev => ({ ...prev, batches: updatedBatches }));
+    }
+  };
+
+  // Handle file upload to Cloudinary
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size should be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'course_thumbnails');
+
+    try {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      
+      // Update form data with Cloudinary URL
+      setFormData(prev => ({
+        ...prev,
+        thumbnail: data.secure_url
+      }));
+      
+      // Set preview image
+      setPreviewImage(data.secure_url);
+      
+      // Reset progress after a delay
+      setTimeout(() => {
+        setUploadProgress(0);
+      }, 1000);
+
+      return data.secure_url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload image. Please try again.');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Handle file input change
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+      
+      // Upload to Cloudinary
+      const cloudinaryUrl = await handleFileUpload(file);
+      
+      // Clean up preview URL if upload successful
+      if (cloudinaryUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     }
   };
 
@@ -221,10 +323,13 @@ const CourseManagement = () => {
       duration: '',
       level: 'Beginner',
       thumbnail: '',
-      batches: [{ name: 'Batch 1', startDate: '', endDate: '', maxStudents: 30, status: 'Upcoming' }],
+      batches: [{ name: 'Batch 1', startDate: '', endDate: '', maxStudents: 30 }],
       isPublished: false
     });
     setSelectedCourse(null);
+    setPreviewImage('');
+    setUploading(false);
+    setUploadProgress(0);
   };
 
   // Open edit modal
@@ -241,9 +346,10 @@ const CourseManagement = () => {
       level: course.level || 'Beginner',
       thumbnail: course.thumbnail || '',
       batches: course.batches.length > 0 ? course.batches : 
-               [{ name: 'Batch 1', startDate: '', endDate: '', maxStudents: 30, status: 'Upcoming' }],
+               [{ name: 'Batch 1', startDate: '', endDate: '', maxStudents: 30 }],
       isPublished: course.isPublished || false
     });
+    setPreviewImage(course.thumbnail || '');
     setShowEditModal(true);
   };
 
@@ -511,13 +617,6 @@ const CourseManagement = () => {
                   {course.batches.slice(0, 2).map((batch, idx) => (
                     <div key={idx} className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">{batch.name}</span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        batch.status === 'Ongoing' ? 'bg-green-100 text-green-800' :
-                        batch.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {batch.status}
-                      </span>
                     </div>
                   ))}
                   {course.batches.length > 2 && (
@@ -767,19 +866,102 @@ const CourseManagement = () => {
                       </select>
                     </div>
 
-                    {/* Thumbnail URL */}
+                    {/* Thumbnail Upload */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Thumbnail URL
+                        Thumbnail *
                       </label>
+                      
+                      {/* Upload Area */}
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#E2CC40] transition-colors">
+                        {previewImage ? (
+                          <div className="space-y-4">
+                            <div className="relative mx-auto w-48 h-48">
+                              <img
+                                src={previewImage}
+                                alt="Preview"
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                              {uploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                                  <div className="text-white">
+                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                                    <p className="text-sm">Uploading... {uploadProgress}%</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2 justify-center">
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFileChange}
+                                  className="hidden"
+                                  disabled={uploading}
+                                />
+                                <span className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                  Change Image
+                                </span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewImage('');
+                                  setFormData(prev => ({ ...prev, thumbnail: '' }));
+                                }}
+                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                                disabled={uploading}
+                              />
+                              <div className="space-y-4">
+                                <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                                  <Upload className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <div>
+                                  <p className="text-gray-700 font-medium">
+                                    Click to upload thumbnail
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    PNG, JPG, GIF up to 5MB
+                                  </p>
+                                </div>
+                                {uploading && (
+                                  <div className="space-y-2">
+                                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#E2CC40]" />
+                                    <p className="text-sm text-gray-600">
+                                      Uploading... {uploadProgress}%
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Hidden input for Cloudinary URL */}
                       <input
-                        type="url"
+                        type="hidden"
                         name="thumbnail"
                         value={formData.thumbnail}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E2CC40] focus:border-transparent text-gray-900"
-                        placeholder="https://example.com/image.jpg"
+                        required={!formData.thumbnail}
                       />
+                      {!formData.thumbnail && !previewImage && (
+                        <p className="text-red-500 text-sm mt-2">Please upload a thumbnail image</p>
+                      )}
                     </div>
 
                     {/* Description */}
@@ -916,9 +1098,21 @@ const CourseManagement = () => {
                       type="submit"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-[#E2CC40] to-[#F4D03F] text-[#011F2F] font-semibold hover:shadow-lg transition-shadow"
+                      disabled={!formData.thumbnail || uploading}
+                      className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-shadow ${
+                        !formData.thumbnail || uploading
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-[#E2CC40] to-[#F4D03F] text-[#011F2F] hover:shadow-lg'
+                      }`}
                     >
-                      Create Course
+                      {uploading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </span>
+                      ) : (
+                        'Create Course'
+                      )}
                     </motion.button>
                   </div>
                 </form>
@@ -1055,18 +1249,91 @@ const CourseManagement = () => {
                       </select>
                     </div>
 
-                    {/* Thumbnail URL */}
+                    {/* Thumbnail Upload */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Thumbnail URL
+                        Thumbnail
                       </label>
-                      <input
-                        type="url"
-                        name="thumbnail"
-                        value={formData.thumbnail}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E2CC40] focus:border-transparent text-gray-900"
-                      />
+                      
+                      {/* Upload Area */}
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#E2CC40] transition-colors">
+                        {previewImage ? (
+                          <div className="space-y-4">
+                            <div className="relative mx-auto w-48 h-48">
+                              <img
+                                src={previewImage}
+                                alt="Preview"
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                              {uploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                                  <div className="text-white">
+                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                                    <p className="text-sm">Uploading... {uploadProgress}%</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2 justify-center">
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFileChange}
+                                  className="hidden"
+                                  disabled={uploading}
+                                />
+                                <span className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                  Change Image
+                                </span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewImage('');
+                                  setFormData(prev => ({ ...prev, thumbnail: '' }));
+                                }}
+                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                                disabled={uploading}
+                              />
+                              <div className="space-y-4">
+                                <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                                  <Upload className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <div>
+                                  <p className="text-gray-700 font-medium">
+                                    Click to upload thumbnail
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    PNG, JPG, GIF up to 5MB
+                                  </p>
+                                </div>
+                                {uploading && (
+                                  <div className="space-y-2">
+                                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#E2CC40]" />
+                                    <p className="text-sm text-gray-600">
+                                      Uploading... {uploadProgress}%
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Description */}
@@ -1201,9 +1468,21 @@ const CourseManagement = () => {
                       type="submit"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-[#E2CC40] to-[#F4D03F] text-[#011F2F] font-semibold hover:shadow-lg transition-shadow"
+                      disabled={uploading}
+                      className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-shadow ${
+                        uploading
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-[#E2CC40] to-[#F4D03F] text-[#011F2F] hover:shadow-lg'
+                      }`}
                     >
-                      Update Course
+                      {uploading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </span>
+                      ) : (
+                        'Update Course'
+                      )}
                     </motion.button>
                   </div>
                 </form>
