@@ -238,19 +238,6 @@ const CourseDetailsPage = () => {
 
                                 {/* Action Buttons */}
                                 <div className="flex flex-wrap gap-4 mb-3">
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => course.isPublished && setEnrollmentModal(true)}
-                                        disabled={!course.isPublished}
-                                        className={`px-8 py-3 rounded-lg font-semibold transition-shadow duration-300 flex items-center gap-2 ${course.isPublished
-                                            ? 'bg-gradient-to-r from-[#E2CC40] to-[#F4D03F] text-[#011F2F] hover:shadow-lg'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            }`}
-                                    >
-                                        <BookOpen className="w-5 h-5" />
-                                        Enroll Now
-                                    </motion.button>
 
                                     <button
                                         onClick={shareCourse}
@@ -379,12 +366,12 @@ const CourseDetailsPage = () => {
                                                                                 setEnrollmentModal(true);
                                                                             }}
                                                                             disabled={!course.isPublished}
-                                                                            className={`px-6 py-2 rounded-lg font-medium transition-colors ${course.isPublished
+                                                                            className={`px-3 py-2 rounded-lg font-medium transition-colors ${course.isPublished
                                                                                 ? 'bg-[#E2CC40] text-[#011F2F] hover:bg-[#F4D03F]'
                                                                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                                                 }`}
                                                                         >
-                                                                            Select Batch
+                                                                            Enroll Now
                                                                         </button>
                                                                     </div>
                                                                 </div>
@@ -430,17 +417,6 @@ const CourseDetailsPage = () => {
                                             <span className="text-gray-700">Access to community forum</span>
                                         </div>
                                     </div>
-
-                                    <button
-                                        onClick={() => course.isPublished && setEnrollmentModal(true)}
-                                        disabled={!course.isPublished}
-                                        className={`w-full py-3 rounded-lg font-semibold transition-shadow duration-300 ${course.isPublished
-                                            ? 'bg-gradient-to-r from-[#E2CC40] to-[#F4D03F] text-[#011F2F] hover:shadow-lg'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            }`}
-                                    >
-                                        {course.isPublished ? 'Enroll Now' : 'Coming Soon'}
-                                    </button>
 
                                     <p className="text-center text-sm text-gray-500 mt-4">
                                         30-day money-back guarantee
