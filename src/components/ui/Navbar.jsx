@@ -4,29 +4,56 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, LogIn, LayoutDashboard, LogOut, User, Home, BookOpen, Info, Phone, ClipboardList, FileQuestion } from 'lucide-react';
+import { 
+  Menu, X, LogIn, LayoutDashboard, LogOut, User, Home, 
+  BookOpen, Info, Phone, ClipboardList, FileQuestion, 
+  Users, Settings, BarChart, BookCheck, FileCheck,
+  GraduationCap, BookMarked, UserCheck
+} from 'lucide-react';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  const navItems = [
+  // Common navigation items for all users
+  const commonNavItems = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Courses', path: '/courses', icon: BookOpen },
     { name: 'About', path: '/about', icon: Info },
     { name: 'Contact', path: '/contact', icon: Phone },
   ];
 
-  const mobileUserMenuItems = [
+  // Student menu items
+  const studentMenuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Courses', path: '/my-courses', icon: BookOpen },
+    { name: 'My Courses', path: '/my-courses', icon: BookOpen },
     { name: 'Assignments', path: '/assignments', icon: ClipboardList },
     { name: 'Quizzes', path: '/quizzes', icon: FileQuestion },
+    { name: 'Progress', path: '/progress', icon: BarChart },
   ];
+
+  // Admin menu items
+  const adminMenuItems = [
+    { name: 'Course Management', path: '/admin/courses-management', icon: BookCheck },
+    { name: 'Enrollment Management', path: '/admin/enrollments', icon: UserCheck },
+    { name: 'Assignment Review', path: '/admin/assignments', icon: FileCheck },
+    { name: 'Analytics', path: '/admin/analytics', icon: BarChart },
+  ];
+
+  // Get user-specific menu items based on role
+  const getUserMenuItems = () => {
+    if (userRole === 'admin') {
+      return adminMenuItems;
+    } else if (userRole === 'student') {
+      return studentMenuItems;
+    }
+    return [];
+  };
 
   // Fetch current user on mount and route change
   useEffect(() => {
@@ -40,12 +67,15 @@ const Navbar = () => {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+          setUserRole(data.user?.role || null);
         } else {
           setUser(null);
+          setUserRole(null);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
         setUser(null);
+        setUserRole(null);
       }
     };
 
@@ -69,7 +99,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-
   // Handle logout
   const handleLogout = async () => {
     try {
@@ -80,6 +109,7 @@ const Navbar = () => {
       
       if (response.ok) {
         setUser(null);
+        setUserRole(null);
         setShowDrawer(false);
         setShowLogoutModal(false);
         router.push('/');
@@ -87,6 +117,41 @@ const Navbar = () => {
       }
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user?.fullName) return 'U';
+    return user.fullName
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get role badge color
+  const getRoleBadgeColor = () => {
+    switch (userRole) {
+      case 'admin':
+        return 'bg-red-100 text-red-800';
+      case 'student':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get role display name
+  const getRoleDisplayName = () => {
+    switch (userRole) {
+      case 'admin':
+        return 'Administrator';
+      case 'student':
+        return 'Student';
+      default:
+        return 'User';
     }
   };
 
@@ -122,7 +187,7 @@ const Navbar = () => {
 
             {/* Desktop Navigation - Middle */}
             <div className="hidden md:flex items-center space-x-1">
-              {navItems.map((item, index) => (
+              {commonNavItems.map((item, index) => (
                 <motion.div
                   key={item.name}
                   initial={{ opacity: 0, y: -20 }}
@@ -161,18 +226,21 @@ const Navbar = () => {
             {/* Right Side - User Icon or Login Button (Desktop) */}
             <div className="hidden md:flex items-center space-x-4">
               {user ? (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative"
-                >
-                  <button
-                    onClick={() => setShowDrawer(true)}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] text-white font-bold hover:shadow-lg transition-shadow duration-300"
+                <>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative"
                   >
-                    {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                  </button>
-                </motion.div>
+                    <button
+                      onClick={() => setShowDrawer(true)}
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] text-white font-bold hover:shadow-lg transition-shadow duration-300"
+                      title={`${user.fullName || 'User'} (${getRoleDisplayName()})`}
+                    >
+                      {getUserInitials()}
+                    </button>
+                  </motion.div>
+                </>
               ) : (
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -193,17 +261,20 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile - User Icon or Login Button (Replaces hamburger menu) */}
+            {/* Mobile - User Icon or Login Button */}
             <div className="md:hidden flex items-center space-x-4">
               {user ? (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowDrawer(true)}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] text-white font-bold hover:shadow-lg transition-shadow duration-300"
-                  aria-label="User menu"
-                >
-                  {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                </motion.button>
+                <>
+                  
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowDrawer(true)}
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] text-white font-bold hover:shadow-lg transition-shadow duration-300"
+                    aria-label="User menu"
+                  >
+                    {getUserInitials()}
+                  </motion.button>
+                </>
               ) : (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -226,7 +297,7 @@ const Navbar = () => {
       {/* Mobile Bottom Navigation (Fixed at bottom) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t shadow-lg">
         <div className="flex items-center justify-around px-2 py-3">
-          {navItems.map((item) => (
+          {commonNavItems.map((item) => (
             <motion.div
               key={item.name}
               whileTap={{ scale: 0.95 }}
@@ -256,7 +327,7 @@ const Navbar = () => {
 
       {/* Mobile User Drawer */}
       <AnimatePresence>
-        {showDrawer && (
+        {showDrawer && user && (
           <>
             {/* Backdrop */}
             <motion.div
@@ -295,36 +366,44 @@ const Navbar = () => {
                 <div className="p-6 border-b">
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] flex items-center justify-center text-white text-2xl font-bold">
-                      {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                      {getUserInitials()}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">
                         {user?.fullName}
                       </h3>
-                      <p className="text-sm text-gray-500">{user?.email}</p>
+                      <p className="text-sm text-gray-500 mb-1">{user?.email}</p>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor()}`}>
+                        {getRoleDisplayName()}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* User Menu Items */}
-                <div className="flex-1 p-4">
-                  {mobileUserMenuItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.path}
-                      className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors mb-2"
-                      onClick={() => setShowDrawer(false)}
-                    >
-                      <item.icon className="w-5 h-5 text-gray-600 mr-3" />
-                      <span className="text-gray-700">{item.name}</span>
-                      {isActive(item.path) && (
-                        <motion.div
-                          className="ml-auto w-2 h-2 rounded-full bg-[#E2CC40]"
-                          layoutId="drawerActiveIndicator"
-                        />
-                      )}
-                    </Link>
-                  ))}
+                <div className="flex-1 p-4 overflow-y-auto">
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
+                      Navigation
+                    </h4>
+                    {getUserMenuItems().map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.path}
+                        className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors mb-2"
+                        onClick={() => setShowDrawer(false)}
+                      >
+                        <item.icon className="w-5 h-5 text-gray-600 mr-3" />
+                        <span className="text-gray-700">{item.name}</span>
+                        {isActive(item.path) && (
+                          <motion.div
+                            className="ml-auto w-2 h-2 rounded-full bg-[#E2CC40]"
+                            layoutId="drawerActiveIndicator"
+                          />
+                        )}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Footer - Logout Button */}
@@ -334,7 +413,7 @@ const Navbar = () => {
                       setShowDrawer(false);
                       setShowLogoutModal(true);
                     }}
-                    className="flex items-center justify-center w-full py-3 px-4 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                    className="flex items-center justify-center w-full py-3 px-4 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-medium"
                   >
                     <LogOut className="w-5 h-5 mr-2" />
                     Logout
