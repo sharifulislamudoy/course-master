@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, LogIn, LayoutDashboard, LogOut, User, Home, BookOpen, Info, Phone } from 'lucide-react';
+import { Menu, X, LogIn, LayoutDashboard, LogOut, User, Home, BookOpen, Info, Phone, ClipboardList, FileQuestion } from 'lucide-react';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
@@ -20,6 +19,13 @@ const Navbar = () => {
     { name: 'Course Listing', path: '/courses', icon: BookOpen },
     { name: 'About', path: '/about', icon: Info },
     { name: 'Contact', path: '/contact', icon: Phone },
+  ];
+
+  const mobileUserMenuItems = [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Courses', path: '/my-courses', icon: BookOpen },
+    { name: 'Assignments', path: '/assignments', icon: ClipboardList },
+    { name: 'Quizzes', path: '/quizzes', icon: FileQuestion },
   ];
 
   // Fetch current user on mount and route change
@@ -63,10 +69,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -156,7 +158,7 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* Right Side - User Icon or Login Button */}
+            {/* Right Side - User Icon or Login Button (Desktop) */}
             <div className="hidden md:flex items-center space-x-4">
               {user ? (
                 <motion.div
@@ -191,139 +193,68 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isOpen ? (
-                <X className="w-6 h-6 text-gray-700" />
+            {/* Mobile - User Icon or Login Button (Replaces hamburger menu) */}
+            <div className="md:hidden flex items-center space-x-4">
+              {user ? (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowDrawer(true)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] text-white font-bold hover:shadow-lg transition-shadow duration-300"
+                  aria-label="User menu"
+                >
+                  {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                </motion.button>
               ) : (
-                <Menu className="w-6 h-6 text-gray-700" />
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => router.push('/auth/login')}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${
+                    pathname === '/auth/login'
+                      ? 'bg-[#E2CC40] text-[#011F2F]'
+                      : 'bg-[#011F2F] text-white hover:bg-[#E2CC40] hover:text-[#011F2F]'
+                  }`}
+                  aria-label="Login"
+                >
+                  <LogIn className="w-5 h-5" />
+                </motion.button>
               )}
-            </motion.button>
+            </div>
           </div>
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed top-20 left-0 right-0 z-40 md:hidden bg-white shadow-xl border-t"
-          >
-            <div className="container mx-auto px-4 py-6">
-              <div className="flex flex-col space-y-4">
-                {navItems.map((item) => (
+      {/* Mobile Bottom Navigation (Fixed at bottom) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t shadow-lg">
+        <div className="flex items-center justify-around px-2 py-3">
+          {navItems.map((item) => (
+            <motion.div
+              key={item.name}
+              whileTap={{ scale: 0.95 }}
+              className="flex-1"
+            >
+              <Link
+                href={item.path}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 ${
+                  isActive(item.path)
+                    ? 'text-[#E2CC40]'
+                    : 'text-gray-600 hover:text-[#E2CC40]'
+                }`}
+              >
+                <item.icon className="w-5 h-5 mb-1" />
+                <span className="text-xs font-medium">{item.name}</span>
+                {isActive(item.path) && (
                   <motion.div
-                    key={item.name}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -20, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Link
-                      href={item.path}
-                      className={`flex items-center py-3 px-4 text-lg font-medium rounded-lg transition-all duration-300 ${
-                        isActive(item.path)
-                          ? 'bg-[#011F2F] text-[#E2CC40]'
-                          : 'text-gray-700 hover:text-[#E2CC40] hover:bg-[#011F2F]/5'
-                      }`}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <item.icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </Link>
-                  </motion.div>
-                ))}
-                
-                {/* Mobile User Info or Login */}
-                {user ? (
-                  <motion.div
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -20, opacity: 0 }}
-                    transition={{ duration: 0.2, delay: 0.1 }}
-                    className="pt-4 border-t"
-                  >
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E2CC40] to-[#011F2F] flex items-center justify-center text-white font-bold">
-                          {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {user.fullName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Link
-                      href="/dashboard"
-                      className="flex items-center py-3 px-4 text-gray-700 hover:bg-gray-100 rounded-lg"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <LayoutDashboard className="w-5 h-5 mr-3" />
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/profile"
-                      className="flex items-center py-3 px-4 text-gray-700 hover:bg-gray-100 rounded-lg"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <User className="w-5 h-5 mr-3" />
-                      Profile
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setShowLogoutModal(true);
-                        setIsOpen(false);
-                      }}
-                      className="flex items-center w-full text-left py-3 px-4 text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <LogOut className="w-5 h-5 mr-3" />
-                      Logout
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -20, opacity: 0 }}
-                    transition={{ duration: 0.2, delay: 0.1 }}
-                    className="pt-4 border-t"
-                  >
-                    <Link
-                      href="/auth/login"
-                      className={`flex items-center justify-center space-x-2 w-full py-3 font-semibold rounded-lg transition-all duration-300 ${
-                        pathname === '/auth/login'
-                          ? 'bg-[#E2CC40] text-[#011F2F]'
-                          : 'bg-[#011F2F] text-white hover:bg-[#E2CC40] hover:text-[#011F2F]'
-                      }`}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <LogIn className="w-5 h-5" />
-                      <span>Login</span>
-                    </Link>
-                  </motion.div>
+                    className="w-1.5 h-1.5 rounded-full bg-[#E2CC40] mt-1"
+                    layoutId="mobileActiveIndicator"
+                  />
                 )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
 
-      {/* User Drawer */}
+      {/* Mobile User Drawer */}
       <AnimatePresence>
         {showDrawer && (
           <>
@@ -350,7 +281,7 @@ const Navbar = () => {
                 {/* Header */}
                 <div className="p-6 border-b">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-gray-900">Profile</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Menu</h2>
                     <button
                       onClick={() => setShowDrawer(false)}
                       className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -375,24 +306,25 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                {/* Menu Items */}
+                {/* User Menu Items */}
                 <div className="flex-1 p-4">
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors mb-2"
-                    onClick={() => setShowDrawer(false)}
-                  >
-                    <LayoutDashboard className="w-5 h-5 text-gray-600 mr-3" />
-                    <span className="text-gray-700">Dashboard</span>
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors mb-2"
-                    onClick={() => setShowDrawer(false)}
-                  >
-                    <User className="w-5 h-5 text-gray-600 mr-3" />
-                    <span className="text-gray-700">My Profile</span>
-                  </Link>
+                  {mobileUserMenuItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.path}
+                      className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors mb-2"
+                      onClick={() => setShowDrawer(false)}
+                    >
+                      <item.icon className="w-5 h-5 text-gray-600 mr-3" />
+                      <span className="text-gray-700">{item.name}</span>
+                      {isActive(item.path) && (
+                        <motion.div
+                          className="ml-auto w-2 h-2 rounded-full bg-[#E2CC40]"
+                          layoutId="drawerActiveIndicator"
+                        />
+                      )}
+                    </Link>
+                  ))}
                 </div>
 
                 {/* Footer - Logout Button */}
@@ -471,7 +403,7 @@ const Navbar = () => {
       </AnimatePresence>
 
       {/* Spacer for fixed navbar */}
-      <div className="h-16" />
+      <div className="h-16 md:mb-0 mb-16" />
     </>
   );
 };

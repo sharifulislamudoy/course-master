@@ -77,7 +77,7 @@ const Footer = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 p-3 rounded-full bg-[#E2CC40] text-[#011F2F] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+            className="fixed lg:bottom-8 bottom-20 right-8 z-50 p-3 rounded-full bg-[#E2CC40] text-[#011F2F] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
