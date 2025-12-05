@@ -59,7 +59,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/users/me', {
+        const response = await fetch('https://course-master-server-woad.vercel.app/api/users/me', {
           method: 'GET',
           credentials: 'include',
         });
@@ -102,7 +102,7 @@ const Navbar = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users/logout', {
+      const response = await fetch('https://course-master-server-woad.vercel.app/api/users/logout', {
         method: 'POST',
         credentials: 'include',
       });

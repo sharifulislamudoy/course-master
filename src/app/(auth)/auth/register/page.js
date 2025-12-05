@@ -61,7 +61,7 @@ export default function RegisterPage() {
     
     try {
       // Register user
-      const response = await fetch('http://localhost:5000/api/users/register', {
+      const response = await fetch('https://course-master-server-woad.vercel.app/api/users/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export default function RegisterPage() {
       }
 
       // Auto-login after successful registration
-      const loginResponse = await fetch('http://localhost:5000/api/users/login', {
+      const loginResponse = await fetch('https://course-master-server-woad.vercel.app/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -72,10 +72,10 @@ const CourseManagement = () => {
         try {
             setLoading(true);
             const [coursesRes, filtersRes] = await Promise.all([
-                fetch('http://localhost:5000/api/courses', {
+                fetch('https://course-master-server-woad.vercel.app/api/courses', {
                     credentials: 'include',
                 }),
-                fetch('http://localhost:5000/api/courses/filters/all', {
+                fetch('https://course-master-server-woad.vercel.app/api/courses/filters/all', {
                     credentials: 'include',
                 })
             ]);
@@ -238,7 +238,7 @@ const CourseManagement = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch('http://localhost:5000/api/courses', {
+            const response = await fetch('https://course-master-server-woad.vercel.app/api/courses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -266,7 +266,7 @@ const CourseManagement = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch(`http://localhost:5000/api/courses/${selectedCourse._id}`, {
+            const response = await fetch(`https://course-master-server-woad.vercel.app/api/courses/${selectedCourse._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -292,7 +292,7 @@ const CourseManagement = () => {
     // Handle course deletion
     const handleDeleteCourse = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/courses/${selectedCourse._id}`, {
+            const response = await fetch(`https://course-master-server-woad.vercel.app/api/courses/${selectedCourse._id}`, {
                 method: 'DELETE',
                 credentials: 'include',
             });

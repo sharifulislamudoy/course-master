@@ -52,7 +52,7 @@ const CourseDetailsPage = () => {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`http://localhost:5000/api/courses/${params.id}`);
+            const response = await fetch(`https://course-master-server-woad.vercel.app/api/courses/${params.id}`);
 
             if (!response.ok) {
                 throw new Error('Course not found');
