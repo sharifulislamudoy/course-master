@@ -16,7 +16,7 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
-    { name: 'Course Listing', path: '/courses', icon: BookOpen },
+    { name: 'Courses', path: '/courses', icon: BookOpen },
     { name: 'About', path: '/about', icon: Info },
     { name: 'Contact', path: '/contact', icon: Phone },
   ];
@@ -403,7 +403,7 @@ const Navbar = () => {
       </AnimatePresence>
 
       {/* Spacer for fixed navbar */}
-      <div className="h-16 md:mb-0 mb-16" />
+      <div className="h-16 md:mb-0" />
     </>
   );
 };
