@@ -1,13 +1,13 @@
 'use client';
 
-import { store } from '@/lib/redux/store'
+import AuthProvider from '@/components/AuthProvider';
 import React from 'react'
-import { Provider } from 'react-redux'
 
-export default function Provide({children}) {
+
+export default function Provide({ children }) {
     return (
-        <Provider store={store}>
+        <AuthProvider>
             {children}
-        </Provider>
+        </AuthProvider>
     )
 }

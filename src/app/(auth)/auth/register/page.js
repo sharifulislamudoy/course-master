@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { UserPlus, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, clearError } from '@/lib/redux/slices/authSlice';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,9 +16,9 @@ export default function RegisterPage() {
     confirmPassword: '',
   });
   const [errors, setErrors] = useState({});
-  
-  const dispatch = useDispatch();
-  const { isLoading, error } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const router = useRouter();
 
   const validateForm = () => {
     const newErrors = {};
@@ -57,32 +56,72 @@ export default function RegisterPage() {
       return;
     }
     
-    // Clear any previous errors
-    dispatch(clearError());
+    setLoading(true);
+    setAuthError('');
     
-    // Prepare user data (exclude confirmPassword)
-    const userData = {
-      fullName: formData.fullName,
-      email: formData.email,
-      password: formData.password,
-    };
-    
-    // Dispatch registration action
-    dispatch(registerUser(userData));
-    
-    // Form data will be logged in authSlice when registerUser is fulfilled
+    try {
+      // Register user
+      const response = await fetch('http://localhost:5000/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Auto-login after successful registration
+      const loginResponse = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+        credentials: 'include',
+      });
+
+      const loginData = await loginResponse.json();
+
+      if (!loginResponse.ok) {
+        setAuthError('Registration successful but auto-login failed. Please login manually.');
+        router.push('/auth/login');
+      } else {
+        // Redirect to dashboard and refresh page
+        router.push('/dashboard');
+        router.refresh();
+      }
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      setAuthError(error.message || 'An error occurred during registration');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    // Clear Redux error if exists
-    if (error) {
-      dispatch(clearError());
+    
+    if (authError) {
+      setAuthError('');
     }
   };
 
@@ -102,14 +141,13 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* Display Redux error */}
-      {error && (
+      {authError && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
         >
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-600">{authError}</p>
         </motion.div>
       )}
 
@@ -159,7 +197,7 @@ export default function RegisterPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border text-black ${
                 errors.email ? 'border-red-500' : 'border-gray-300'
               } focus:outline-none focus:ring-2 focus:ring-[#E2CC40]/50 focus:border-[#E2CC40] transition-all duration-300`}
               placeholder="Enter your email"
@@ -260,19 +298,18 @@ export default function RegisterPage() {
           )}
         </div>
 
-        {/* Submit Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           type="submit"
-          disabled={isLoading}
+          disabled={loading}
           className={`w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-all duration-300 ${
-            isLoading
+            loading
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-[#011F2F] text-white hover:bg-[#E2CC40] hover:text-[#011F2F]'
           }`}
         >
-          {isLoading ? (
+          {loading ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               <span>Creating account...</span>
@@ -286,7 +323,6 @@ export default function RegisterPage() {
         </motion.button>
       </form>
 
-      {/* Sign In Link */}
       <div className="mt-8 text-center">
         <p className="text-gray-600">
           Already have an account?{' '}

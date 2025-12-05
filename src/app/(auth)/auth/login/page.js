@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearError } from '@/lib/redux/slices/authSlice';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,9 +13,9 @@ export default function LoginPage() {
     password: '',
   });
   const [errors, setErrors] = useState({});
-  
-  const dispatch = useDispatch();
-  const { isLoading, error } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const router = useRouter();
 
   const validateForm = () => {
     const newErrors = {};
@@ -44,25 +43,50 @@ export default function LoginPage() {
       return;
     }
     
-    // Clear any previous errors
-    dispatch(clearError());
+    setLoading(true);
+    setAuthError('');
     
-    // Dispatch login action with form data
-    dispatch(loginUser(formData));
-    
-    // Form data will be logged in authSlice when loginUser is fulfilled
+    try {
+      const response = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid email or password');
+      }
+
+      // Redirect to dashboard and refresh page
+      router.push('/dashboard');
+      router.refresh();
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      setAuthError(error.message || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    // Clear Redux error if exists
-    if (error) {
-      dispatch(clearError());
+    
+    if (authError) {
+      setAuthError('');
     }
   };
 
@@ -82,14 +106,13 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Display Redux error */}
-      {error && (
+      {authError && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
         >
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-600">{authError}</p>
         </motion.div>
       )}
 
@@ -173,14 +196,14 @@ export default function LoginPage() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           type="submit"
-          disabled={isLoading}
+          disabled={loading}
           className={`w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-all duration-300 ${
-            isLoading
+            loading
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-[#011F2F] text-white hover:bg-[#E2CC40] hover:text-[#011F2F]'
           }`}
         >
-          {isLoading ? (
+          {loading ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               <span>Signing in...</span>
@@ -194,7 +217,6 @@ export default function LoginPage() {
         </motion.button>
       </form>
 
-      {/* Sign Up Link */}
       <div className="mt-8 text-center">
         <p className="text-gray-600">
           Don't have an account?{' '}
