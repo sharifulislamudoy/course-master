@@ -163,12 +163,6 @@ const CoursesPage = () => {
                                     <Filter className="w-5 h-5" />
                                     Filters
                                 </h2>
-                                <button
-                                    onClick={resetFilters}
-                                    className="text-sm text-[#E2CC40] hover:text-[#F4D03F] font-medium"
-                                >
-                                    Reset All
-                                </button>
                             </div>
 
                             {/* Categories */}
