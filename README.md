@@ -36,3 +36,20 @@ npm i
 node index.js
 ```
 
+### Step 2: Import env file
+client side (.env.local) 
+```bash
+PORT=5000
+MONGO_URI=your-mongodb-uri
+JWT_SECRET=your-jwt-secret-key-here
+NODE_ENV=development
+```
+
+server side
+```bash
+PORT=5000
+MONGO_URI=your-mongodb-uri
+JWT_SECRET=your-jwt-secret-key-here
+NODE_ENV=development
+```
+
