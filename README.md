@@ -25,3 +25,14 @@ client side
 ```bash
 git clone https://github.com/sharifulislamudoy/course-master
 cd course-master
+npm i
+npm run dev
+```
+server side 
+```bash
+git clone https://github.com/sharifulislamudoy/course-master-server
+cd course-master-server
+npm i
+node index.js
+```
+
